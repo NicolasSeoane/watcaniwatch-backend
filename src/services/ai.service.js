@@ -4,6 +4,7 @@ import { fetchMovieByTitle } from "./tmdb.service.js";
 import { enrichPrompt } from "../utils/openai.js";
 
 const openai = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
   apiKey: ENV.OPENAI_API_KEY,
 });
 
@@ -20,19 +21,21 @@ Respond only in JSON format with this schema:
 `;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: 'openai/gpt-4o',
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: enrichPrompt(prompt) },
     ],
     temperature: 0.8,
+    max_tokens: 1000
   });
 
-  const content = completion.choices[0].message?.content;
 
+  const content = completion.choices[0].message?.content;
   let parsed;
   try {
-    parsed = JSON.parse(content);
+    const cleanedContent = content.replace(/^```json|```$/g, '').trim();
+    parsed = JSON.parse(cleanedContent);
   } catch (err) {
     console.error("Error parsing JSON from OpenAI:", content);
     throw new Error("Invalid response from AI model");
