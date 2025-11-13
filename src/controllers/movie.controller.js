@@ -1,4 +1,4 @@
-import { fetchPopularMovies, fetchTrendingMovies, fetchMovieById, fetchRandomMovie, fetchFilteredMovie } from "../services/tmdb.service.js";
+import { fetchPopularMovies, fetchTrendingMovies, fetchMovieById, fetchRandomMovie, fetchFilteredMovie, fetchMoviesByQuery } from "../services/tmdb.service.js";
 
 export const getPopularMovies = async (req, res, next) => {
   const page = parseInt(req.query.page);
@@ -52,3 +52,16 @@ export const getFilteredMovie = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getMoviesByQuery = async (req, res, next) => {
+  try {
+    const { query } = req.query;
+    const movies = await fetchMoviesByQuery(query);
+    res.status(200).json(movies);
+  } catch (error) {
+    if (error.message.includes("No movies found")) {
+      return res.status(404).json({ message: error.message });
+    }
+    next(error);
+  }
+}

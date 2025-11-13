@@ -1,23 +1,20 @@
 import axios from "axios";
 import { ENV } from "../config/env.js";
 
-const TMDB_BASE_URL = ENV.TMDB_BASE_URL
-const TMDB_API_KEY = ENV.TMDB_API_KEY
+const TMDB_BASE_URL = ENV.TMDB_BASE_URL;
+const TMDB_API_KEY = ENV.TMDB_API_KEY;
 export const fetchPopularMovies = async (page) => {
   try {
-    const response = await axios.get(
-      `${TMDB_BASE_URL}/movie/popular`,
-      {
-        params: {
-          language: "en-US",
-          page,
-        },
-        headers: {
-          accept: "application/json",
-          Authorization: TMDB_API_KEY,
-        },
-      }
-    );
+    const response = await axios.get(`${TMDB_BASE_URL}/movie/popular`, {
+      params: {
+        language: "en-US",
+        page,
+      },
+      headers: {
+        accept: "application/json",
+        Authorization: TMDB_API_KEY,
+      },
+    });
 
     return response.data;
   } catch (error) {
@@ -46,15 +43,12 @@ export const fetchTrendingMovies = async () => {
     const genresMap = Object.fromEntries(genresList.map((g) => [g.id, g.name]));
 
     // Obtener tendencia
-    const response = await axios.get(
-      `${TMDB_BASE_URL}/trending/movie/week`,
-      {
-        headers: {
-          accept: "application/json",
-          Authorization: TMDB_API_KEY,
-        },
-      }
-    );
+    const response = await axios.get(`${TMDB_BASE_URL}/trending/movie/week`, {
+      headers: {
+        accept: "application/json",
+        Authorization: TMDB_API_KEY,
+      },
+    });
 
     if (!response || response.data.results.length === 0) {
       throw { status: 404, message: "No trending movies found" };
@@ -82,15 +76,12 @@ export const fetchTrendingMovies = async () => {
 
 export const fetchMovieById = async (movieId) => {
   try {
-    const response = await axios.get(
-      `${TMDB_BASE_URL}/movie/${movieId}`,
-      {
-        headers: {
-          accept: "application/json",
-          Authorization: TMDB_API_KEY,
-        },
-      }
-    );
+    const response = await axios.get(`${TMDB_BASE_URL}/movie/${movieId}`, {
+      headers: {
+        accept: "application/json",
+        Authorization: TMDB_API_KEY,
+      },
+    });
     const movie = response.data;
     const videosRes = await getMovieVideos(movie.id);
     const imagesRes = await getMovieImages(movie.id);
@@ -146,18 +137,15 @@ function getMovieVideos(movieId) {
 }
 
 async function fetchDiscoverPage(page = 1) {
-  const { data } = await axios.get(
-    `${TMDB_BASE_URL}/discover/movie`,
-    {
-      headers: {
-        accept: "application/json",
-        Authorization: TMDB_API_KEY,
-      },
-      params: {
-        page,
-      },
-    }
-  );
+  const { data } = await axios.get(`${TMDB_BASE_URL}/discover/movie`, {
+    headers: {
+      accept: "application/json",
+      Authorization: TMDB_API_KEY,
+    },
+    params: {
+      page,
+    },
+  });
 
   const filteredMovies = data.results.filter(
     (movie) =>
@@ -169,7 +157,7 @@ async function fetchDiscoverPage(page = 1) {
 export const fetchRandomMovie = async () => {
   let results = [];
   let attempts = 0;
-  const maxAttempts = 10; 
+  const maxAttempts = 10;
 
   do {
     const randomPage = randomInt(1, 500); // TMDB tiene max 500 paginas
@@ -195,23 +183,20 @@ export const fetchFilteredMovie = async ({
   maxYear,
 }) => {
   try {
-    const response = await axios.get(
-      `${TMDB_BASE_URL}/discover/movie`,
-      {
-        headers: {
-          accept: "application/json",
-          Authorization: TMDB_API_KEY,
-        },
-        params: {
-          include_adult: false,
-          "vote_count.gte": 200,
-          "vote_average.gte": minRating,
-          "primary_release_date.gte": `${minYear}-01-01`,
-          "primary_release_date.lte": `${maxYear}-12-31`,
-          with_genres: genre,
-        },
-      }
-    );
+    const response = await axios.get(`${TMDB_BASE_URL}/discover/movie`, {
+      headers: {
+        accept: "application/json",
+        Authorization: TMDB_API_KEY,
+      },
+      params: {
+        include_adult: false,
+        "vote_count.gte": 200,
+        "vote_average.gte": minRating,
+        "primary_release_date.gte": `${minYear}-01-01`,
+        "primary_release_date.lte": `${maxYear}-12-31`,
+        with_genres: genre,
+      },
+    });
     const results = response.data.results;
     if (!results || results.length === 0) {
       const error = new Error("No movies found matching the criteria");
@@ -229,15 +214,12 @@ export const fetchFilteredMovie = async ({
 
 export const fetchAllGenres = async () => {
   try {
-    const response = await axios.get(
-      `${TMDB_BASE_URL}/genre/movie/list`,
-      {
-        headers: {
-          accept: "application/json",
-          Authorization: TMDB_API_KEY,
-        },
-      }
-    );
+    const response = await axios.get(`${TMDB_BASE_URL}/genre/movie/list`, {
+      headers: {
+        accept: "application/json",
+        Authorization: TMDB_API_KEY,
+      },
+    });
     return response.data.genres;
   } catch (error) {
     console.error(
@@ -272,6 +254,35 @@ export const fetchMovieByTitle = async (title, year) => {
       release_date: movie.release_date,
       vote_average: movie.vote_average,
     };
+  } catch (err) {
+    console.error("Error fetching movie from TMDB:", err.message);
+    return null;
+  }
+};
+
+export const fetchMoviesByQuery = async (query) => {
+  try {
+    const res = await axios.get(`${TMDB_BASE_URL}/search/movie`, {
+      headers: {
+        accept: "application/json",
+        Authorization: TMDB_API_KEY,
+      },
+      params: {
+        query: query,
+      },
+    });
+
+    const movies = res.data.results;
+    if (!movies) return null;
+
+    const filteredMovies = movies.map((movie) => ({
+      id: movie.id,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      release_date: movie.release_date,
+    }));
+
+    return filteredMovies;
   } catch (err) {
     console.error("Error fetching movie from TMDB:", err.message);
     return null;
